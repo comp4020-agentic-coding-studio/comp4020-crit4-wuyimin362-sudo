@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>COMP4020 prototype</title>
+    <title>Slide — a one-string guitar in the browser</title>
     <meta
       name="description"
-      content="Replace this with one sentence saying what this page is. A search result and a link preview both show it."
+      content="A fretless slide guitar you play by dragging. Every note is synthesised in the page, one plucked string at a time."
     />
 
     <!--
@@ -23,15 +23,29 @@
   <body>
     <header>
       <nav aria-label="Primary">
-        <a href="./">Home</a>
+        <a href="./">Slide</a>
       </nav>
     </header>
     <main>
-      <h1>COMP4020 prototype</h1>
-      <p data-testid="intro">
-        Replace this with your prototype. This week's brief is on the course website;
-        <code>spec/README.md</code> explains how the checks in this repo relate to it.
-      </p>
+      <h1>Slide</h1>
+
+      <!--
+        The string is a real <button>, not a div with a click handler. Pointer
+        events give it mouse, touch and pen from one code path; being a button
+        gives it the keyboard, a focus ring and a name for free.
+      -->
+      <button
+        type="button"
+        class="string"
+        id="string"
+        aria-label="Slide string. Press to pluck; drag sideways, or use the left and right arrow keys, to slide the pitch."
+      >
+        <span class="wire" id="wire" aria-hidden="true"></span>
+        <span class="bottleneck" id="bottleneck" aria-hidden="true"></span>
+      </button>
+
+      <p class="readout" id="readout">A3</p>
+      <p class="hint">Drag along the string. There is no wrong note.</p>
     </main>
     <script type="module" src="./main.js"></script>
   </body>

@@ -1,16 +1,149 @@
+:root {
+  --ink: #f3ede4;
+  --board: #2a1d16;
+  --brass: #e8c27a;
+
+  color-scheme: dark;
+}
+
 body {
   margin: 0;
-  padding: 2rem;
+  padding: 2rem 1.5rem;
+  background: #16100c;
+  color: var(--ink);
   font-family: system-ui, sans-serif;
   line-height: 1.6;
-  color: #1a1a1a;
 }
 
 main {
-  max-width: 40rem;
+  max-width: 46rem;
   margin: 0 auto;
 }
 
+nav {
+  max-width: 46rem;
+  margin: 0 auto 2rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
 a {
-  color: #0b5fff;
+  color: var(--brass);
+  text-decoration: none;
+}
+
+h1 {
+  margin: 0 0 1.5rem;
+  font-size: clamp(2rem, 9vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+/* The playable surface. `touch-action: none` is load-bearing: without it a
+   drag on a phone scrolls the page instead of sliding the note. */
+.string {
+  display: block;
+  position: relative;
+  width: 100%;
+  height: clamp(9rem, 30vh, 14rem);
+  margin: 0;
+  padding: 0;
+  border: 1px solid #4a3527;
+  border-radius: 0.75rem;
+  background: linear-gradient(180deg, #33251c, var(--board));
+  cursor: ew-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.string:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}
+
+/* The string itself, drawn across the middle of the board. */
+.wire {
+  position: absolute;
+  inset-inline: 1.5rem;
+  top: 50%;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #8a7a63, #d9cbb4, #8a7a63);
+  box-shadow: 0 0 6px rgb(233 210 170 / 35%);
+}
+
+/* Before the first pluck the string breathes, so the opening screen is an
+   invitation rather than a diagram. It stops once the page has been played. */
+.string:not([data-touched]) .wire {
+  animation: breathe 2.4s ease-in-out infinite;
+}
+
+.wire.plucked {
+  animation: vibrate 0.85s cubic-bezier(0.15, 0.85, 0.25, 1) forwards;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.55;
+  }
+
+  50% {
+    transform: scaleY(2.5);
+    opacity: 1;
+  }
+}
+
+@keyframes vibrate {
+  0% {
+    transform: scaleY(9);
+    filter: blur(1.5px);
+  }
+
+  100% {
+    transform: scaleY(1);
+    filter: blur(0);
+  }
+}
+
+/* Where the slide is sitting. --at is a unitless 0..1, written from JS; calc
+   can scale a length by a number but not by another percentage. */
+.bottleneck {
+  position: absolute;
+  top: 50%;
+  left: calc(1.5rem + (100% - 3rem) * var(--at, 0.5));
+  width: 0.85rem;
+  height: 3.25rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, #f6e6c4, #b9975b);
+  box-shadow: 0 0 14px rgb(232 194 122 / 45%);
+  transform: translate(-50%, -50%);
+  transition: left 60ms linear;
+}
+
+.readout {
+  margin: 1.25rem 0 0;
+  color: var(--brass);
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hint {
+  margin: 0.35rem 0 0;
+  color: #9b8b7a;
+  font-size: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .string:not([data-touched]) .wire,
+  .wire.plucked {
+    animation: none;
+  }
+
+  .bottleneck {
+    transition: none;
+  }
 }
