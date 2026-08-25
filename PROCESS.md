@@ -2,14 +2,19 @@
 
 ## What I built
 
-**Slide** — a one-string slide guitar in the browser. It is fretless on purpose:
-there is no wrong note to land on because there are no frets to miss, and a
-slide is the cheapest gesture that reads as expressive rather than as pressing
-buttons. Every note is synthesised in the page with Karplus–Strong — a burst of
-noise fed round a delay line one period long — so nothing is played back. Where
-you press along the string is the pitch, and where you press across it is the
-pick position: near the bridge is thin and bright, over the neck is dark and
-round.
+**Six Strings** — an acoustic guitar in the browser, drawn and played as one.
+Every note is synthesised in the page with Karplus–Strong (a burst of noise fed
+round a delay line one period long), so nothing is played back. You strum by
+dragging across the strings over the soundhole, barre by dragging across the
+neck, and slacken or tighten a string by turning its tuning peg — which moves
+its pitch and its colour together, because that is what tension does.
+
+Two decisions carry most of whether it reads as a guitar rather than as a demo
+of a synthesis algorithm. The strings sound **one at a time** as the hand
+crosses them: the twenty-odd milliseconds between them is most of the
+difference between a strum and a chord stab. And the raw algorithm is a string
+in a vacuum, so it plays through a **body** — a Helmholtz air resonance near
+100 Hz, the soundboard near 200 Hz, and a rolled-off top.
 
 ## The moments that mattered
 
@@ -63,24 +68,50 @@ satisfying an interaction requirement and an accessibility one at once.
 Both of these are the kind of thing that looks fine until you hear it, so both
 are recorded in `CLAUDE.md` rather than only fixed in place.
 
-A slide needs the pitch to move continuously while the note rings, and the
-textbook way to do that in Web Audio is a real feedback loop — a `DelayNode`
-whose `delayTime` you modulate. Web Audio imposes a 128-sample floor on any
-delay inside a feedback loop, which at 48 kHz caps the fundamental at about
-344 Hz. A guitar's open high E is 330 Hz, so that approach dies at exactly the
-range the instrument needs. I render the buffer instead and slide with
-`playbackRate`.
+Fretting a ringing string, or turning its peg while it sounds, has to bend the
+note rather than restart it. The textbook way to get a moving pitch in Web
+Audio is a real feedback loop — a `DelayNode` whose `delayTime` you modulate.
+Web Audio imposes a 128-sample floor on any delay inside a feedback loop, which
+at 48 kHz caps the fundamental at about 344 Hz. A guitar's open high E is
+330 Hz, so that approach dies at exactly the range the instrument needs, and it
+dies quietly: it works while you test the low strings. I render the buffer
+instead and bend with `playbackRate`.
 
-The second is subtler: render the buffer at a fixed reference pitch and a slide
-of two octaves resamples the note into a chipmunk. Rendering it at the pitch it
-was struck at keeps `playbackRate` near 1, so only the distance actually
-travelled costs any timbre.
+The second is subtler: render every buffer at one fixed reference pitch and a
+bass string resamples into a chipmunk. Each note is rendered at the pitch it was
+struck at and its own root recorded alongside it, so `playbackRate` starts at 1
+and only the distance actually bent costs any timbre.
 
 [`8e920f7`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-wuyimin362-sudo/commit/8e920f7)
 carried the harness forward from Assignment 1 before any prototype work, keeping
 the operating rules that still applied — never pipe a check into `tail` when you
 then act on its exit code — and dropping the Astro-specific ones I had stopped
 needing.
+
+### Throwing away a working prototype
+
+The first version was a one-string slide guitar
+([`79156db`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-wuyimin362-sudo/commit/79156db)).
+It passed every test in the suite and it was the wrong thing: it demonstrated
+that the synthesis worked without ever looking like an instrument a stranger
+would pick up. The spec line it failed — *a stranger can play it uninstructed* —
+is one of the four no test can hold, which is exactly why the green suite didn't
+notice.
+
+Rebuilding it as a real six-string
+([`fc289f9`](https://github.com/comp4020-agentic-coding-studio/comp4020-crit4-wuyimin362-sudo/commit/fc289f9))
+cost almost nothing in the part that was hard, because `synth.js` had no opinion
+about how many strings there were or what the page looked like. The separation
+that was made for testability paid out as replaceability.
+
+What I added on top was the realism the first version had no room for: fret
+spacing that follows the rule of 18 so the neck reads as a neck, wound bass
+strings that are visibly thicker, a comb filter for pick position, per-string
+decay, and the strum offset. The new test
+(`spec/guitar.test.ts`) runs the real module against the real built page,
+because the failure mode of a page built entirely from geometry is that a
+selector stops matching and the guitar renders with no strings on it — which
+looks, from the outside, exactly like nothing happening.
 
 ## What the checks still can't tell me
 
