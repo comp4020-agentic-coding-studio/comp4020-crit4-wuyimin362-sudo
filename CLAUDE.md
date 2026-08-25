@@ -18,6 +18,26 @@ which deliverable applies. Read both before you plan or build.
 - When a check fails, read its output before you change anything.
 - Never commit a red state.
 
+## The stack
+
+Vanilla HTML/CSS/JavaScript, carried forward from Assignment 1 rather than the
+template's default Vite setup: no bundler, no framework.
+
+- `main.js` is loaded straight by the browser as an ES module. `tsc --noEmit`
+  type-checks it via JSDoc annotations (`allowJs`/`checkJs` in `tsconfig.json`),
+  it never compiles it. Add more modules the same way; there's no build step to
+  wire them into beyond listing them in `index.html`.
+- `scripts/build.js` copies the site's top-level entries into `dist/` and
+  parse-checks every emitted module with `node --check`. It discovers entries
+  by reading the directory rather than a hardcoded list, so a new page or
+  module doesn't silently drop out of `dist/`.
+- `scripts/serve.js` is a zero-dependency static server for local viewing
+  (`pnpm dev` / `pnpm preview`) — it serves the repo root as-is, not a build
+  artefact.
+- Linting is `oxlint` (JS, `.oxlintrc.json`) and `stylelint` (CSS,
+  `.stylelintrc.json`), both wired into `pnpm check` alongside typecheck, build
+  and the test suite.
+
 ## The link-preview card
 
 `public/card.png` (1200x630) is the image a shared link shows; `index.html`'s
@@ -33,6 +53,21 @@ ship); CI runs the same plus links, secrets and the deploy. Read the failure.
 
 `spec/README.md`, `PROCESS.md` and `reflections/README.md` are in this repo and
 say what they are for.
+
+## Running the checks
+
+Carried forward from earlier weeks — general operating discipline, not tied to
+any one stack:
+
+- **Never pipe a check into `tail`, `head`, or `grep` in a command whose exit
+  code you then act on.** A pipeline's status is the *last* command's, so
+  `pnpm check | tail -6 && git commit` commits whatever `tail` felt about
+  life — which is always success. This put a red state into the history once
+  already. Either redirect and inspect (`pnpm check > /tmp/check.log 2>&1; echo
+  $?`) or `set -o pipefail` first.
+- **The shell's working directory persists between tool calls.** A `cd /tmp` to
+  run a screenshot tool leaves the *next* build looking for a `package.json` in
+  `/tmp`. Prefer absolute paths over `cd`.
 
 ## This file is yours
 
