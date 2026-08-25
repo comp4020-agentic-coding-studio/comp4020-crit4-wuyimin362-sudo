@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Slide — a one-string guitar in the browser</title>
+    <title>Six Strings — an acoustic guitar in the browser</title>
     <meta
       name="description"
-      content="A fretless slide guitar you play by dragging. Every note is synthesised in the page, one plucked string at a time."
+      content="A playable acoustic guitar. Strum across the soundhole, fret the neck, and turn the tuning pegs to slacken or tighten each string. Every note is synthesised in the page."
     />
 
     <!--
@@ -23,30 +23,217 @@
   <body>
     <header>
       <nav aria-label="Primary">
-        <a href="./">Slide</a>
+        <a href="./">Six Strings</a>
       </nav>
     </header>
+
     <main>
-      <h1>Slide</h1>
+      <h1 class="visually-hidden">Six Strings — an acoustic guitar</h1>
 
       <!--
-        The string is a real <button>, not a div with a click handler. Pointer
-        events give it mouse, touch and pen from one code path; being a button
-        gives it the keyboard, a focus ring and a name for free.
+        Geometry note: the SVG viewBox is 0 0 200 430 and .stage is locked to
+        that aspect ratio, so a percentage position on an overlaid button lands
+        on exactly the viewBox coordinate main.js computes. Change one and you
+        must change the other.
       -->
-      <button
-        type="button"
-        class="string"
-        id="string"
-        aria-label="Slide string. Press to pluck; drag sideways, or use the left and right arrow keys, to slide the pitch."
-      >
-        <span class="wire" id="wire" aria-hidden="true"></span>
-        <span class="bottleneck" id="bottleneck" aria-hidden="true"></span>
-      </button>
+      <div class="stage" id="stage">
+        <svg
+          class="guitar"
+          viewBox="0 0 200 430"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="An acoustic guitar seen face on: headstock with six tuning pegs at the top, a fretted neck, and a body with a soundhole and bridge."
+        >
+          <defs>
+            <linearGradient id="rosewood" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#2b1810" />
+              <stop offset="0.45" stop-color="#432a1c" />
+              <stop offset="1" stop-color="#241209" />
+            </linearGradient>
+            <linearGradient id="spruce" x1="0.1" y1="0" x2="0.9" y2="1">
+              <stop offset="0" stop-color="#f0d7ab" />
+              <stop offset="0.5" stop-color="#e3c088" />
+              <stop offset="1" stop-color="#c99f63" />
+            </linearGradient>
+            <linearGradient id="steel" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#8d8880" />
+              <stop offset="0.4" stop-color="#f4f2ea" />
+              <stop offset="1" stop-color="#9a958c" />
+            </linearGradient>
+            <linearGradient id="bronze" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#7d5f31" />
+              <stop offset="0.4" stop-color="#e3bd7c" />
+              <stop offset="1" stop-color="#8b6b3a" />
+            </linearGradient>
+            <radialGradient id="cavity" cx="0.5" cy="0.42" r="0.6">
+              <stop offset="0" stop-color="#0d0805" />
+              <stop offset="0.75" stop-color="#160d07" />
+              <stop offset="1" stop-color="#2a1a10" />
+            </radialGradient>
+            <linearGradient id="knob" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f6efe0" />
+              <stop offset="1" stop-color="#b9a888" />
+            </linearGradient>
+          </defs>
 
-      <p class="readout" id="readout">A3</p>
-      <p class="hint">Drag along the string. There is no wrong note.</p>
+          <!-- Body. Upper bout, waist and lower bout are one symmetric path;
+               the binding is its stroke. -->
+          <path
+            class="body"
+            d="M 100 200
+               C 132 200, 158 220, 162 254
+               C 165 282, 148 292, 148 310
+               C 148 332, 172 340, 180 362
+               C 188 386, 186 412, 158 424
+               C 140 431, 118 430, 100 430
+               C 82 430, 60 431, 42 424
+               C 14 412, 12 386, 20 362
+               C 28 340, 52 332, 52 310
+               C 52 292, 35 282, 38 254
+               C 42 220, 68 200, 100 200 Z"
+          />
+
+          <!-- Pickguard: the plate a pick overshoots onto, treble side. -->
+          <path
+            class="pickguard"
+            d="M 134 274
+               C 152 284, 162 308, 156 334
+               C 152 350, 138 356, 130 348
+               C 138 336, 140 316, 136 300
+               C 134 290, 132 280, 134 274 Z"
+          />
+
+          <!-- Soundhole and rosette -->
+          <circle class="rosette-outer" cx="100" cy="302" r="39" />
+          <circle class="rosette-inner" cx="100" cy="302" r="35.5" />
+          <circle class="soundhole" cx="100" cy="302" r="33" />
+
+          <!-- Bridge, bone saddle, and the six pins holding the string ends -->
+          <rect class="bridge" x="58" y="368" width="84" height="23" rx="6" />
+          <rect class="saddle" x="64" y="372" width="72" height="3.4" rx="1.7" />
+          <g class="pins">
+            <circle cx="64" cy="384" r="2.6" />
+            <circle cx="78.4" cy="384" r="2.6" />
+            <circle cx="92.8" cy="384" r="2.6" />
+            <circle cx="107.2" cy="384" r="2.6" />
+            <circle cx="121.6" cy="384" r="2.6" />
+            <circle cx="136" cy="384" r="2.6" />
+          </g>
+
+          <!-- Neck heel, fretboard, nut -->
+          <path class="neck" d="M 70 76 L 130 76 L 136 234 L 64 234 Z" />
+          <path class="fretboard" d="M 72 78 L 128 78 L 134 232 L 66 232 Z" />
+
+          <!-- Fret wires. Spacing follows the rule of 18: each fret sits at
+               scale * (1 - 2^(-n/12)) from the nut, so they crowd together
+               toward the body exactly as they do on a real neck. -->
+          <g class="frets" id="frets"></g>
+
+          <!-- Position inlays -->
+          <g class="inlays">
+            <circle cx="100" cy="117.8" r="3.1" />
+            <circle cx="100" cy="145.8" r="3.1" />
+            <circle cx="100" cy="170.8" r="3.1" />
+            <circle cx="100" cy="193" r="3.1" />
+            <circle cx="88" cy="222" r="3.1" />
+            <circle cx="112" cy="222" r="3.1" />
+          </g>
+
+          <rect class="nut" x="70.5" y="74" width="59" height="4.5" rx="1.6" />
+
+          <!-- Headstock, sitting behind the nut -->
+          <path
+            class="headstock"
+            d="M 72 76 L 66 24 Q 65 7 82 6 L 118 6 Q 135 7 134 24 L 128 76 Z"
+          />
+          <g class="posts">
+            <circle cx="80" cy="20" r="4.6" />
+            <circle cx="80" cy="40" r="4.6" />
+            <circle cx="80" cy="60" r="4.6" />
+            <circle cx="120" cy="20" r="4.6" />
+            <circle cx="120" cy="40" r="4.6" />
+            <circle cx="120" cy="60" r="4.6" />
+          </g>
+
+          <!-- Peg shafts, drawn under the knob buttons that overlay them -->
+          <g class="shafts">
+            <rect x="52" y="18.4" width="28" height="3.2" rx="1.6" />
+            <rect x="52" y="38.4" width="28" height="3.2" rx="1.6" />
+            <rect x="52" y="58.4" width="28" height="3.2" rx="1.6" />
+            <rect x="120" y="18.4" width="28" height="3.2" rx="1.6" />
+            <rect x="120" y="38.4" width="28" height="3.2" rx="1.6" />
+            <rect x="120" y="58.4" width="28" height="3.2" rx="1.6" />
+          </g>
+
+          <!-- Fretting fingers, moved by main.js -->
+          <g class="fingers" id="fingers"></g>
+
+          <!-- The strings: post, over the nut, down to the saddle. Written by
+               main.js so the geometry lives in one place. -->
+          <g class="strings" id="strings"></g>
+        </svg>
+
+        <!--
+          The pointer never touches these. All strumming, fretting and tuning is
+          geometry computed on #stage, because a strum is a gesture across the
+          strings rather than a click on one of them. The buttons exist so the
+          same instrument is reachable by keyboard and announced to a screen
+          reader, and their focus rings land on the thing they control.
+        -->
+        <button class="peg" type="button" data-peg="0" style="--x: 24%; --y: 4.65%">
+          <span class="visually-hidden">Tuning peg, 6th string (low E)</span>
+        </button>
+        <button class="peg" type="button" data-peg="1" style="--x: 24%; --y: 9.3%">
+          <span class="visually-hidden">Tuning peg, 5th string (A)</span>
+        </button>
+        <button class="peg" type="button" data-peg="2" style="--x: 24%; --y: 13.95%">
+          <span class="visually-hidden">Tuning peg, 4th string (D)</span>
+        </button>
+        <button class="peg" type="button" data-peg="5" style="--x: 76%; --y: 4.65%">
+          <span class="visually-hidden">Tuning peg, 1st string (high E)</span>
+        </button>
+        <button class="peg" type="button" data-peg="4" style="--x: 76%; --y: 9.3%">
+          <span class="visually-hidden">Tuning peg, 2nd string (B)</span>
+        </button>
+        <button class="peg" type="button" data-peg="3" style="--x: 76%; --y: 13.95%">
+          <span class="visually-hidden">Tuning peg, 3rd string (G)</span>
+        </button>
+
+        <button class="stringkey" type="button" data-key="0" style="--x: 32.4%">
+          <span class="visually-hidden">6th string, low E</span>
+        </button>
+        <button class="stringkey" type="button" data-key="1" style="--x: 39.6%">
+          <span class="visually-hidden">5th string, A</span>
+        </button>
+        <button class="stringkey" type="button" data-key="2" style="--x: 46.8%">
+          <span class="visually-hidden">4th string, D</span>
+        </button>
+        <button class="stringkey" type="button" data-key="3" style="--x: 54%">
+          <span class="visually-hidden">3rd string, G</span>
+        </button>
+        <button class="stringkey" type="button" data-key="4" style="--x: 61.2%">
+          <span class="visually-hidden">2nd string, B</span>
+        </button>
+        <button class="stringkey" type="button" data-key="5" style="--x: 68.4%">
+          <span class="visually-hidden">1st string, high E</span>
+        </button>
+      </div>
+
+      <div class="panel">
+        <p class="chord" id="chord">open strings</p>
+        <p class="tuning" id="tuning"></p>
+        <div class="actions">
+          <button class="action" type="button" id="strum-down">Strum down</button>
+          <button class="action" type="button" id="strum-up">Strum up</button>
+          <button class="action" type="button" id="reset">Retune to standard</button>
+        </div>
+        <p class="hint">
+          Drag across the strings over the soundhole to strum. Press the neck to fret a
+          chord. Turn a peg to slacken or tighten a string.
+        </p>
+      </div>
     </main>
+
     <script type="module" src="./main.js"></script>
   </body>
 </html>

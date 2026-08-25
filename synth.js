@@ -12,9 +12,11 @@
  * @param {number} freq fundamental, Hz
  * @param {object} [options]
  * @param {number} [options.seconds] length of the rendered note
- * @param {number} [options.brightness] 0..1 pick position: 1 is at the bridge
- *   (thin and bright), 0 is over the neck (dark and round)
+ * @param {number} [options.brightness] 0..1 tone of the excitation: 1 keeps the
+ *   noise intact, 0 filters it down to a dull thud
  * @param {number} [options.sustain] 0..1 feedback gain, one trip round the loop
+ * @param {number} [options.pick] 0..0.5 where along the string it was plucked,
+ *   as a fraction of its length. 0 disables the model.
  * @param {() => number} [options.random] injectable RNG, so tests are repeatable
  * @returns {Float32Array<ArrayBuffer>} mono samples in -1..1. The buffer type
  *   is pinned because `AudioBuffer.copyToChannel` refuses a possibly-shared one.
@@ -24,6 +26,7 @@ export function pluck(sampleRate, freq, options = {}) {
     seconds = 3,
     brightness = 0.5,
     sustain = 0.996,
+    pick = 0,
     random = Math.random,
   } = options;
 
@@ -41,6 +44,17 @@ export function pluck(sampleRate, freq, options = {}) {
   for (let i = 0; i < period; i++) {
     lp += brightness * (random() * 2 - 1 - lp);
     out[i] = lp;
+  }
+
+  // Where you picked it. A string plucked a third of the way along can't
+  // vibrate in any mode with a node at that point, so every third harmonic is
+  // missing — subtracting a delayed copy of the excitation puts exactly those
+  // notches in. This is most of the difference between a bridge pluck and a
+  // neck one, and it is the part a plain lowpass can't fake.
+  if (pick > 0) {
+    const offset = Math.max(1, Math.round(period * Math.min(0.5, pick)));
+    // Backwards, so each sample is combed against the untouched original.
+    for (let i = period - 1; i >= offset; i--) out[i] -= out[i - offset];
   }
 
   // Normalise the excitation so pick position changes the colour of the note

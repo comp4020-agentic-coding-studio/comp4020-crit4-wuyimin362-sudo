@@ -1,30 +1,29 @@
 :root {
-  --ink: #f3ede4;
-  --board: #2a1d16;
-  --brass: #e8c27a;
+  --ink: #efe6d8;
+  --dim: #9a8b78;
+  --brass: #e0bd7e;
 
   color-scheme: dark;
 }
 
-body {
-  margin: 0;
-  padding: 2rem 1.5rem;
-  background: #16100c;
-  color: var(--ink);
-  font-family: system-ui, sans-serif;
-  line-height: 1.6;
+* {
+  box-sizing: border-box;
 }
 
-main {
-  max-width: 46rem;
-  margin: 0 auto;
+body {
+  margin: 0;
+  padding: 1rem 1rem 2rem;
+  background: radial-gradient(120% 90% at 50% 0%, #241a14, #100b08 70%);
+  color: var(--ink);
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
 }
 
 nav {
-  max-width: 46rem;
-  margin: 0 auto 2rem;
-  font-size: 0.8rem;
-  letter-spacing: 0.16em;
+  max-width: 54rem;
+  margin: 0 auto 0.75rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
 }
 
@@ -33,117 +32,297 @@ a {
   text-decoration: none;
 }
 
-h1 {
-  margin: 0 0 1.5rem;
-  font-size: clamp(2rem, 9vw, 3.5rem);
-  font-weight: 500;
-  letter-spacing: -0.02em;
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 54rem;
+  margin: 0 auto;
 }
 
-/* The playable surface. `touch-action: none` is load-bearing: without it a
-   drag on a phone scrolls the page instead of sliding the note. */
-.string {
-  display: block;
-  position: relative;
-  width: 100%;
-  height: clamp(9rem, 30vh, 14rem);
-  margin: 0;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
   padding: 0;
-  border: 1px solid #4a3527;
-  border-radius: 0.75rem;
-  background: linear-gradient(180deg, #33251c, var(--board));
-  cursor: ew-resize;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* The stage is locked to the SVG's viewBox ratio so the overlaid buttons and
+   main.js's pointer maths agree on where every string is. */
+.stage {
+  position: relative;
+  aspect-ratio: 200 / 430;
+  height: min(74vh, 46rem);
+  max-width: 100%;
   touch-action: none;
   user-select: none;
 }
 
-.string:focus-visible {
-  outline: 2px solid var(--brass);
-  outline-offset: 3px;
+.guitar {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 18px 30px rgb(0 0 0 / 55%));
 }
 
-/* The string itself, drawn across the middle of the board. */
-.wire {
-  position: absolute;
-  inset-inline: 1.5rem;
-  top: 50%;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(90deg, #8a7a63, #d9cbb4, #8a7a63);
-  box-shadow: 0 0 6px rgb(233 210 170 / 35%);
+/* --- the instrument ---------------------------------------------------- */
+
+.body {
+  fill: url("#spruce");
+  stroke: #f6ebd3;
+  stroke-width: 2.4;
 }
 
-/* Before the first pluck the string breathes, so the opening screen is an
-   invitation rather than a diagram. It stops once the page has been played. */
-.string:not([data-touched]) .wire {
-  animation: breathe 2.4s ease-in-out infinite;
+.pickguard {
+  fill: #3a2116;
+  opacity: 0.82;
 }
 
-.wire.plucked {
-  animation: vibrate 0.85s cubic-bezier(0.15, 0.85, 0.25, 1) forwards;
+.rosette-outer {
+  fill: none;
+  stroke: #6b4a2c;
+  stroke-width: 3.4;
 }
 
-@keyframes breathe {
-  0%,
-  100% {
-    transform: scaleY(1);
-    opacity: 0.55;
-  }
+.rosette-inner {
+  fill: none;
+  stroke: #a8825a;
+  stroke-width: 1.6;
+}
 
-  50% {
-    transform: scaleY(2.5);
-    opacity: 1;
-  }
+.soundhole {
+  fill: url("#cavity");
+}
+
+.bridge {
+  fill: #2a1810;
+}
+
+.saddle {
+  fill: #efe3c9;
+}
+
+.pins {
+  fill: #f2e8d2;
+}
+
+.neck {
+  fill: #2c1a11;
+}
+
+.fretboard {
+  fill: url("#rosewood");
+}
+
+.frets line {
+  stroke: #cfc6b4;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.inlays {
+  fill: #e7dcc4;
+  opacity: 0.75;
+}
+
+.nut {
+  fill: #f0e6cf;
+}
+
+.headstock {
+  fill: url("#rosewood");
+  stroke: #1a0e08;
+  stroke-width: 1.2;
+}
+
+.posts {
+  fill: #cfd0cc;
+}
+
+.shafts {
+  fill: #b8b9b4;
+}
+
+/* --- strings ----------------------------------------------------------- */
+
+.string {
+  fill: none;
+  stroke-linejoin: round;
+  stroke-width: var(--w);
+}
+
+.string.wound {
+  stroke: url("#bronze");
+}
+
+.string.plain {
+  stroke: url("#steel");
+}
+
+/* A vibrating string reads as a wider, blurred band that settles. Animating
+   stroke-width is the cheapest honest version of that. */
+.string.ringing {
+  animation: vibrate 900ms cubic-bezier(0.1, 0.85, 0.25, 1) forwards;
 }
 
 @keyframes vibrate {
   0% {
-    transform: scaleY(9);
-    filter: blur(1.5px);
+    stroke-width: calc(var(--w) * 4.5);
+    opacity: 0.62;
+  }
+
+  35% {
+    stroke-width: calc(var(--w) * 2);
+    opacity: 0.82;
   }
 
   100% {
-    transform: scaleY(1);
-    filter: blur(0);
+    stroke-width: var(--w);
+    opacity: 1;
   }
 }
 
-/* Where the slide is sitting. --at is a unitless 0..1, written from JS; calc
-   can scale a length by a number but not by another percentage. */
-.bottleneck {
-  position: absolute;
-  top: 50%;
-  left: calc(1.5rem + (100% - 3rem) * var(--at, 0.5));
-  width: 0.85rem;
-  height: 3.25rem;
-  border-radius: 0.5rem;
-  background: linear-gradient(180deg, #f6e6c4, #b9975b);
-  box-shadow: 0 0 14px rgb(232 194 122 / 45%);
-  transform: translate(-50%, -50%);
-  transition: left 60ms linear;
+/* Before anything has been played, the strings shimmer in turn — the opening
+   screen has to invite the first sound without a caption telling it to. */
+.stage:not([data-played]) .string {
+  animation: beckon 3.4s ease-in-out infinite;
 }
 
-.readout {
-  margin: 1.25rem 0 0;
+.stage:not([data-played]) .string:nth-child(2) { animation-delay: 90ms; }
+.stage:not([data-played]) .string:nth-child(3) { animation-delay: 180ms; }
+.stage:not([data-played]) .string:nth-child(4) { animation-delay: 270ms; }
+.stage:not([data-played]) .string:nth-child(5) { animation-delay: 360ms; }
+.stage:not([data-played]) .string:nth-child(6) { animation-delay: 450ms; }
+
+@keyframes beckon {
+  0%, 72%, 100% {
+    stroke-width: var(--w);
+    opacity: 1;
+  }
+
+  84% {
+    stroke-width: calc(var(--w) * 2.4);
+    opacity: 0.7;
+  }
+}
+
+.finger {
+  fill: #d8452f;
+  opacity: 0;
+  stroke: #7d1d10;
+  stroke-width: 1.2;
+  transition: opacity 120ms ease;
+}
+
+.finger.down {
+  opacity: 0.92;
+}
+
+/* --- overlaid controls --------------------------------------------------
+   The pointer never uses these: strumming is geometry on .stage, because a
+   strum crosses the strings rather than clicking one. They are here so the
+   keyboard and a screen reader reach the same instrument. */
+
+.peg,
+.stringkey {
+  position: absolute;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.peg {
+  left: var(--x);
+  top: var(--y);
+  width: 9%;
+  height: 4.2%;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f6efe0, #b0a084);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 50%);
+  transform: translate(-50%, -50%);
+}
+
+.stringkey {
+  left: var(--x);
+  top: 56%;
+  width: 4%;
+  height: 30%;
+  transform: translateX(-50%);
+}
+
+.peg:focus-visible,
+.stringkey:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 3px;
+}
+
+/* --- panel -------------------------------------------------------------- */
+
+.panel {
+  width: min(28rem, 100%);
+  text-align: center;
+}
+
+.chord {
+  margin: 0;
   color: var(--brass);
-  font-size: 1.75rem;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
+  font-size: 1.05rem;
+  letter-spacing: 0.02em;
+}
+
+.tuning {
+  margin: 0.15rem 0 0;
+  color: var(--dim);
+  font-family: ui-monospace, "SF Mono", monospace;
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 0.7rem;
+}
+
+.action {
+  border: 1px solid #4b3626;
+  border-radius: 999px;
+  background: #241811;
+  color: var(--ink);
+  padding: 0.4rem 0.9rem;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.action:hover {
+  border-color: var(--brass);
+}
+
+.action:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
 }
 
 .hint {
-  margin: 0.35rem 0 0;
-  color: #9b8b7a;
-  font-size: 0.9rem;
+  margin: 0.65rem 0 0;
+  color: var(--dim);
+  font-size: 0.8rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .string:not([data-touched]) .wire,
-  .wire.plucked {
+  .string.ringing,
+  .stage:not([data-played]) .string {
     animation: none;
-  }
-
-  .bottleneck {
-    transition: none;
   }
 }
